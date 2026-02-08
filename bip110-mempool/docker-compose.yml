@@ -81,7 +81,6 @@ services:
 
   db:
     image: mariadb:10.5.21@sha256:dfcba5641bdbfd7cbf5b07eeed707e6a3672f46823695a0d3aba2e49bbd9b1dd
-    user: "1000:1000"
     restart: on-failure
     stop_grace_period: 1m
     environment:
@@ -90,7 +89,7 @@ services:
       MYSQL_PASSWORD: "mempool"
       MYSQL_ROOT_PASSWORD: "moneyprintergobrrr"
     volumes:
-      - ${APP_DATA_DIR}/data/mysql:/var/lib/mysql
+      - ${APP_DATA_DIR}/mysql/data:/var/lib/mysql
     networks:
       default:
         ipv4_address: $APP_BIP110_MEMPOOL_DB_IP
