@@ -1,0 +1,78 @@
+version: "3.7"
+
+services:
+  app_proxy:
+    environment:
+      # <app-id>_<web-container-name>_1
+      APP_HOST: bip110-mempool_web_1
+      APP_PORT: 8080
+
+  web:
+    image: paulscode/mempool-bip110-frontend:v3.2.1@sha256:e12ebd831d0617e47486797b2b9df4d4e5c7808de59bc1d29c6082c4d6a8c468
+    restart: on-failure
+    stop_grace_period: 1m
+    command: "./wait-for db:3306 --timeout=720 -- nginx -g 'daemon off;'"
+    environment:
+      FRONTEND_HTTP_PORT: "8080"
+      BACKEND_MAINNET_HTTP_HOST: "api"
+      BACKEND_MAINNET_HTTP_PORT: "8999"
+    depends_on:
+      - api
+      - db
+
+  api:
+    image: paulscode/mempool-bip110-backend:v3.2.1@sha256:e39413275bd2d9a71a47a04660ccd9234dcd8124a992175e97e86df975d3745f
+    restart: on-failure
+    stop_grace_period: 1m
+    command: "./wait-for-it.sh db:3306 --timeout=720 --strict -- ./start.sh"
+    volumes:
+      - ${APP_DATA_DIR}/data/cache:/backend/cache
+    environment:
+      # Mempool backend config
+      MEMPOOL_BACKEND: "electrum"
+      MEMPOOL_NETWORK: "mainnet"
+      MEMPOOL_CLEAR_PROTECTION_MINUTES: "20"
+      MEMPOOL_INDEXING_BLOCKS_AMOUNT: "52560"
+      MEMPOOL_STDOUT_LOG_MIN_PRIORITY: "info"
+      MEMPOOL_AUTOMATIC_POOLS_UPDATE: "true"
+      MEMPOOL_RUST_GBT: "true"
+      MEMPOOL_CPFP_INDEXING: "false"
+      MEMPOOL_AUDIT: "false"
+      MEMPOOL_ALLOW_UNREACHABLE: "true"
+
+      # Bitcoin Core connection (provided by Umbrel)
+      CORE_RPC_HOST: $APP_BITCOIN_NODE_IP
+      CORE_RPC_PORT: $APP_BITCOIN_RPC_PORT
+      CORE_RPC_USERNAME: $APP_BITCOIN_RPC_USER
+      CORE_RPC_PASSWORD: $APP_BITCOIN_RPC_PASS
+
+      # Electrum connection (provided by Umbrel)
+      ELECTRUM_HOST: $APP_ELECTRS_NODE_IP
+      ELECTRUM_PORT: $APP_ELECTRS_NODE_PORT
+
+      # Database connection
+      DATABASE_ENABLED: "true"
+      DATABASE_HOST: "db"
+      DATABASE_DATABASE: "mempool"
+      DATABASE_USERNAME: "mempool"
+      DATABASE_PASSWORD: "mempool"
+
+      # Statistics
+      STATISTICS_ENABLED: "true"
+
+      # Disable GeoIP (databases not bundled)
+      MAXMIND_ENABLED: "false"
+    depends_on:
+      - db
+
+  db:
+    image: mariadb:10.5.21
+    restart: on-failure
+    stop_grace_period: 1m
+    environment:
+      MYSQL_DATABASE: "mempool"
+      MYSQL_USER: "mempool"
+      MYSQL_PASSWORD: "mempool"
+      MYSQL_ROOT_PASSWORD: "admin"
+    volumes:
+      - ${APP_DATA_DIR}/data/mysql:/var/lib/mysql
