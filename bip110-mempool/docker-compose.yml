@@ -3,32 +3,61 @@ version: "3.7"
 services:
   app_proxy:
     environment:
-      # <app-id>_<web-container-name>_1
-      APP_HOST: bip110-mempool_web_1
-      APP_PORT: 8080
+      APP_HOST: $APP_BIP110_MEMPOOL_IP
+      APP_PORT: $APP_BIP110_MEMPOOL_PORT
 
   web:
     image: paulscode/mempool-bip110-frontend:v3.2.1@sha256:e12ebd831d0617e47486797b2b9df4d4e5c7808de59bc1d29c6082c4d6a8c468
+    user: "1000:1000"
+    init: true
     restart: on-failure
     stop_grace_period: 1m
     command: "./wait-for db:3306 --timeout=720 -- nginx -g 'daemon off;'"
     environment:
-      FRONTEND_HTTP_PORT: "8080"
-      BACKEND_MAINNET_HTTP_HOST: "api"
+      FRONTEND_HTTP_PORT: $APP_BIP110_MEMPOOL_PORT
+      BACKEND_MAINNET_HTTP_HOST: $APP_BIP110_MEMPOOL_API_IP
       BACKEND_MAINNET_HTTP_PORT: "8999"
+      NGINX_PORT: $APP_BIP110_MEMPOOL_PORT
+      NGINX_HOSTNAME: $APP_BIP110_MEMPOOL_API_IP
     depends_on:
       - api
       - db
+    networks:
+      default:
+        ipv4_address: $APP_BIP110_MEMPOOL_IP
 
   api:
     image: paulscode/mempool-bip110-backend:v3.2.1@sha256:e39413275bd2d9a71a47a04660ccd9234dcd8124a992175e97e86df975d3745f
+    user: "1000:1000"
+    init: true
     restart: on-failure
     stop_grace_period: 1m
     command: "./wait-for-it.sh db:3306 --timeout=720 --strict -- ./start.sh"
     volumes:
-      - ${APP_DATA_DIR}/data/cache:/backend/cache
+      - ${APP_DATA_DIR}/data:/backend/cache
     environment:
+      # Bitcoin Core connection (provided by Umbrel)
+      CORE_RPC_HOST: $APP_BITCOIN_NODE_IP
+      CORE_RPC_PORT: $APP_BITCOIN_RPC_PORT
+      CORE_RPC_USERNAME: $APP_BITCOIN_RPC_USER
+      CORE_RPC_PASSWORD: $APP_BITCOIN_RPC_PASS
+
+      # Electrum connection (provided by Umbrel)
+      ELECTRUM_HOST: $APP_ELECTRS_NODE_IP
+      ELECTRUM_PORT: $APP_ELECTRS_NODE_PORT
+      ELECTRUM_TLS: "false"
+
+      # Database connection
+      DATABASE_ENABLED: "true"
+      DATABASE_HOST: $APP_BIP110_MEMPOOL_DB_IP
+      DATABASE_PORT: "3306"
+      DATABASE_DATABASE: "mempool"
+      DATABASE_USERNAME: "mempool"
+      DATABASE_PASSWORD: "mempool"
+
       # Mempool backend config
+      MEMPOOL_HTTP_PORT: "8999"
+      MEMPOOL_CACHE_DIR: "/backend/cache"
       MEMPOOL_BACKEND: "electrum"
       MEMPOOL_NETWORK: "mainnet"
       MEMPOOL_CLEAR_PROTECTION_MINUTES: "20"
@@ -40,39 +69,28 @@ services:
       MEMPOOL_AUDIT: "false"
       MEMPOOL_ALLOW_UNREACHABLE: "true"
 
-      # Bitcoin Core connection (provided by Umbrel)
-      CORE_RPC_HOST: $APP_BITCOIN_NODE_IP
-      CORE_RPC_PORT: $APP_BITCOIN_RPC_PORT
-      CORE_RPC_USERNAME: $APP_BITCOIN_RPC_USER
-      CORE_RPC_PASSWORD: $APP_BITCOIN_RPC_PASS
-
-      # Electrum connection (provided by Umbrel)
-      ELECTRUM_HOST: $APP_ELECTRS_NODE_IP
-      ELECTRUM_PORT: $APP_ELECTRS_NODE_PORT
-
-      # Database connection
-      DATABASE_ENABLED: "true"
-      DATABASE_HOST: "db"
-      DATABASE_DATABASE: "mempool"
-      DATABASE_USERNAME: "mempool"
-      DATABASE_PASSWORD: "mempool"
-
-      # Statistics
-      STATISTICS_ENABLED: "true"
-
       # Disable GeoIP (databases not bundled)
       MAXMIND_ENABLED: "false"
+
+      NODE_OPTIONS: "--max-old-space-size=2048"
     depends_on:
       - db
+    networks:
+      default:
+        ipv4_address: $APP_BIP110_MEMPOOL_API_IP
 
   db:
-    image: mariadb:10.5.21
+    image: mariadb:10.5.21@sha256:dfcba5641bdbfd7cbf5b07eeed707e6a3672f46823695a0d3aba2e49bbd9b1dd
+    user: "1000:1000"
     restart: on-failure
     stop_grace_period: 1m
     environment:
       MYSQL_DATABASE: "mempool"
       MYSQL_USER: "mempool"
       MYSQL_PASSWORD: "mempool"
-      MYSQL_ROOT_PASSWORD: "admin"
+      MYSQL_ROOT_PASSWORD: "moneyprintergobrrr"
     volumes:
       - ${APP_DATA_DIR}/data/mysql:/var/lib/mysql
+    networks:
+      default:
+        ipv4_address: $APP_BIP110_MEMPOOL_DB_IP
