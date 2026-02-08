@@ -7,7 +7,7 @@ services:
       APP_PORT: $APP_BIP110_MEMPOOL_PORT
 
   web:
-    image: paulscode/mempool-bip110-frontend:v3.2.1@sha256:e12ebd831d0617e47486797b2b9df4d4e5c7808de59bc1d29c6082c4d6a8c468
+    image: paulscode/mempool-bip110-frontend:v3.2.1@sha256:a4be8876e2caebcc8495eb628025301276ac61ddbe39bd55642d8dd53b9f1bdd
     user: "1000:1000"
     init: true
     restart: on-failure

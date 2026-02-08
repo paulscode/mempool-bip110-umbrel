@@ -24,6 +24,18 @@ COPY docker/frontend/wait-for .
 COPY nginx.conf .
 COPY nginx-mempool.conf .
 
+# Apply the same transformations that docker/init.sh normally does:
+# - Replace listen address with a port placeholder for the entrypoint
+# - Bind to 0.0.0.0 instead of localhost
+# - Remove 'user nobody;' (nginx alpine runs as non-root uid 1000)
+# - Fix the include path to point to /etc/nginx/conf.d/
+# - Replace backend address with placeholders for the entrypoint
+RUN sed -i "s/127.0.0.1:80/0.0.0.0:__MEMPOOL_FRONTEND_HTTP_PORT__/g" nginx.conf && \
+    sed -i "s/127.0.0.1/0.0.0.0/g" nginx.conf && \
+    sed -i "s/user nobody;//g" nginx.conf && \
+    sed -i "s!/etc/nginx/nginx-mempool.conf!/etc/nginx/conf.d/nginx-mempool.conf!g" nginx.conf && \
+    sed -i "s/127.0.0.1:8999/__MEMPOOL_BACKEND_MAINNET_HTTP_HOST__:__MEMPOOL_BACKEND_MAINNET_HTTP_PORT__/g" nginx-mempool.conf
+
 RUN apt-get update && \
     apt-get install -y build-essential rsync && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
