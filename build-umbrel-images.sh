@@ -14,7 +14,7 @@
 
 set -euo pipefail
 
-VERSION="v3.2.1"
+VERSION="v3.2.1.1"
 FRONTEND_IMAGE="paulscode/mempool-bip110-frontend:${VERSION}"
 BACKEND_IMAGE="paulscode/mempool-bip110-backend:${VERSION}"
 PLATFORMS="linux/amd64,linux/arm64"
@@ -31,7 +31,7 @@ if [[ ! -d "${MEMPOOL_DIR}/frontend" ]] || [[ ! -d "${MEMPOOL_DIR}/backend" ]]; 
 fi
 
 # Select builder with multi-arch support
-BUILDER=$(docker buildx ls | grep -E '^\S+.*docker-container.*' | head -1 | awk '{print $1}' || true)
+BUILDER=$(docker buildx ls | grep -E '^\S+.*docker-container.*' | head -1 | awk '{gsub(/\*$/,"",$1); print $1}' || true)
 if [[ -n "${BUILDER}" ]]; then
   echo "📦 Using buildx builder: ${BUILDER}"
   docker buildx use "${BUILDER}"
@@ -53,6 +53,11 @@ echo "Dockerfile: ${DOCKER_DIR}/Dockerfile.frontend"
 echo "Context:    ${MEMPOOL_DIR}"
 echo "Platforms:  ${PLATFORMS}"
 echo ""
+
+# Ensure mining pool logos are present (they are .gitignored in mempool-bip110)
+echo "📋 Copying mining pool logos into build context..."
+mkdir -p "${MEMPOOL_DIR}/frontend/src/resources/mining-pools"
+cp -n "${DOCKER_DIR}/mining-pools/"*.svg "${MEMPOOL_DIR}/frontend/src/resources/mining-pools/" 2>/dev/null || true
 
 docker buildx build \
   --platform "${PLATFORMS}" \

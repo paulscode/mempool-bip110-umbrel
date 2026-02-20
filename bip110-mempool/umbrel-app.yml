@@ -4,7 +4,7 @@ name: Mempool BIP-110
 tagline: BIP-110 visualization explorer for Bitcoin
 icon: https://raw.githubusercontent.com/paulscode/mempool-bip110-umbrel/master/bip110-mempool/icon.png
 category: finance
-version: "3.2.1"
+version: "3.2.1.1"
 port: 3026
 description: >-
   A specialized fork of the Mempool block explorer that visualizes BIP-110
@@ -34,17 +34,15 @@ description: >-
 
   Based on Mempool v3.2.1. Requires a fully synced Bitcoin node.
 releaseNotes: >-
-  Initial release of Mempool BIP-110 for Umbrel.
+  v3.2.1.1 update:
 
-  • BIP-110 miner signaling detection (version bit 4) with celebratory visuals
+  • BIP-110 deployment phase indicator on dashboard
 
-  • All 7 BIP-110 consensus rule violation checks
+  • Background scanner for historic block violation stats with progress bar
 
-  • Warning-style visualization for would-be-invalid transactions
+  • Performance optimizations for block loading without txindex
 
-  • Pulsing "None ✓" badge on signaling blocks with zero violations
-
-  • Combined signaling + violations visual state
+  • Fixed mining pool icon loading
 
   • Based on Mempool v3.2.1
 developer: paulscode
