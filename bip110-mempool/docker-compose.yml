@@ -7,7 +7,7 @@ services:
       APP_PORT: $APP_BIP110_MEMPOOL_PORT
 
   web:
-    image: paulscode/mempool-bip110-frontend:v3.2.1.1@sha256:2dd5315ec11fa584bcd9446f46723580058cd1d999cb57e24dddd8106a110a79
+    image: paulscode/mempool-bip110-frontend:v3.2.1.3@sha256:1fac662ed7f64d65e8d521ab698d89dce80b95a14117714d5d8ee74f002a15a6
     user: "1000:1000"
     init: true
     restart: on-failure
@@ -27,7 +27,7 @@ services:
         ipv4_address: $APP_BIP110_MEMPOOL_IP
 
   api:
-    image: paulscode/mempool-bip110-backend:v3.2.1.1@sha256:d9909486ad9d8f71b211dc13ff88d24d59573fad284ba63d2e093f65b5602ca3
+    image: paulscode/mempool-bip110-backend:v3.2.1.3@sha256:6f357f3c2629132f2fd78de95e3b5f5124608b93395b3541c717bf31785d1f5b
     user: "1000:1000"
     init: true
     restart: on-failure
